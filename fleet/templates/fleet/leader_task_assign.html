@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>分配任务</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-3" style="background:#f0f2f5;">
+<div class="container">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">分配任务</h5>
+        <a href="{% url 'team_dashboard' %}" class="btn btn-light border">返回</a>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} small">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="mb-2 fw-bold">{{ task.title }}</div>
+            <div class="small text-muted mb-3">{{ task.detail }}</div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3 fw-bold">选择成员（可包含自己）</div>
+
+                <div class="row g-2">
+                    {% for m in members %}
+                        <div class="col-6 col-md-3">
+                            <label class="border rounded p-2 w-100" style="background:#fff;">
+                                <input type="checkbox" name="members" value="{{ m.id }}" class="form-check-input me-2">
+                                {{ m.name }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <button class="btn btn-warning mt-3">确认分配（进入处理中）</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据驾驶舱</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
+        .stat-box { background: #1e293b; border-radius: 12px; padding: 20px; text-align: center; height: 100%; border: 1px solid #334155; }
+        .stat-num { font-size: 3rem; font-weight: bold; background: -webkit-linear-gradient(#38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .list-group-item { background: transparent; border-color: #334155; color: #cbd5e1; }
+    </style>
+</head>
+<body class="p-4">
+    <div class="d-flex justify-content-between mb-4">
+        <h2 class="fw-bold">🚀 智慧车队数据驾驶舱</h2>
+        <div class="text-end">
+            <h4 id="clock">00:00:00</h4>
+            <small class="text-muted">实时监控中</small>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-3"><div class="stat-box"><h3>总车辆</h3><div class="stat-num">{{ stats.total }}</div></div></div>
+        <div class="col-3"><div class="stat-box"><h3>作业中</h3><div class="stat-num text-success" style="-webkit-text-fill-color: #4ade80;">{{ stats.working }}</div></div></div>
+        <div class="col-3"><div class="stat-box"><h3>维修中</h3><div class="stat-num text-danger" style="-webkit-text-fill-color: #f87171;">{{ stats.repair }}</div></div></div>
+        <div class="col-3"><div class="stat-box"><h3>空闲</h3><div class="stat-num text-secondary" style="-webkit-text-fill-color: #94a3b8;">{{ stats.idle }}</div></div></div>
+    </div>
+
+    <div class="row h-100">
+        <div class="col-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header border-secondary fw-bold">📋 实时运营流水</div>
+                <ul class="list-group list-group-flush">
+                    {% for op in recent_ops %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>
+                            <span class="badge bg-primary me-2">{{ op.get_record_type_display }}</span>
+                            {{ op.vehicle.plate_number }}
+                        </span>
+                        <span>{{ op.driver.name }} <small class="text-muted ms-2">{{ op.create_at|date:"H:i" }}</small></span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-6">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-header border-secondary fw-bold">🔧 维修监控</div>
+                <ul class="list-group list-group-flush">
+                    {% for r in recent_repairs %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold text-warning">{{ r.vehicle.plate_number }}</span>
+                            <span class="badge {% if r.status == 'pending' %}bg-danger{% else %}bg-info{% endif %}">{{ r.get_status_display }}</span>
+                        </div>
+                        <div class="small text-muted mt-1">{{ r.content }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 简单的时钟
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString();
+        }, 1000);
+        
+        // 每60秒自动刷新页面获取最新数据
+        setTimeout(() => location.reload(), 60000);
+    </script>
+</body>
+</html>

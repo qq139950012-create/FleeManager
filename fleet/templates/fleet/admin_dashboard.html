@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: -apple-system, sans-serif; }
+        .sidebar { min-height: 100vh; background: #2d3748; color: white; }
+        .nav-link { color: rgba(255,255,255,0.7); margin-bottom: 5px; }
+        .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.1); border-radius: 8px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .table th { font-weight: 600; color: #718096; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar p-4 d-none d-md-block">
+            <h5 class="fw-bold mb-4"><i class="fas fa-shield-alt me-2"></i>车队管理后台</h5>
+            <div class="nav flex-column">
+                <a href="{% url 'admin_dashboard' %}" class="nav-link active"><i class="fas fa-home me-2"></i>概览</a>
+                <a href="{% url 'admin_bonus_list' %}" class="nav-link"><i class="fas fa-coins me-2"></i>奖金管理</a>
+                <a href="{% url 'admin_employee_import' %}" class="nav-link"><i class="fas fa-file-import me-2"></i>数据导入</a>
+                <a href="{% url 'home' %}" class="nav-link mt-4 text-warning"><i class="fas fa-arrow-left me-2"></i>返回前台</a>
+            </div>
+        </div>
+
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold">管理概览</h4>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary fs-6">{{ me.name }}</span>
+                    <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm">退出</a>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="card mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">车辆列表 ({{ vehicles|length }})</h6>
+                    <div>
+                        <a href="{% url 'admin_vehicle_add' %}" class="btn btn-primary btn-sm rounded-pill"><i class="fas fa-plus me-1"></i>新增车辆</a>
+                        <a href="{% url 'admin_vehicle_import' %}" class="btn btn-outline-secondary btn-sm rounded-pill">导入</a>
+                        <a href="{% url 'admin_vehicle_export' %}" class="btn btn-link btn-sm text-muted">导出</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">自编号</th>
+                                    <th>车牌号</th>
+                                    <th>当前司机</th>
+                                    <th>状态</th>
+                                    <th class="text-center">二维码</th> <th class="text-end pe-4">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for v in vehicles %}
+                                <tr>
+                                    <td class="ps-4">{{ v.vehicle_id }}</td>
+                                    <td class="fw-bold">{{ v.plate_number }}</td>
+                                    <td>
+                                        {% if v.current_driver %}
+                                            <span class="badge bg-success bg-opacity-10 text-success">{{ v.current_driver.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted small">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if v.status == 'working' %}<span class="badge bg-primary">作业中</span>
+                                        {% elif v.status == 'repairing' %}<span class="badge bg-danger">维修中</span>
+                                        {% else %}<span class="badge bg-secondary">空闲</span>{% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{% url 'generate_qrcode' v.id %}" target="_blank" class="btn btn-light btn-sm text-dark border" title="查看/打印二维码">
+                                            <i class="fas fa-qrcode"></i>
+                                        </a>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="{% url 'admin_vehicle_edit' v.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">编辑</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold">人员列表</h6>
+                            <div>
+                                <a href="{% url 'admin_employee_add' %}" class="btn btn-primary btn-sm rounded-pill">新增</a>
+                                <a href="{% url 'admin_employee_import' %}" class="btn btn-outline-secondary btn-sm rounded-pill">导入</a>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 400px;">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light"><tr><th class="ps-4">姓名</th><th>角色</th><th class="text-end pe-4">操作</th></tr></thead>
+                                    <tbody>
+                                        {% for e in employees %}
+                                        <tr>
+                                            <td class="ps-4">{{ e.name }} <br><small class="text-muted">{{ e.user.username }}</small></td>
+                                            <td><span class="badge bg-info text-dark bg-opacity-10">{{ e.get_role_display }}</span></td>
+                                            <td class="text-end pe-4"><a href="{% url 'admin_employee_edit' e.id %}" class="btn btn-sm btn-light">管理</a></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-white py-3"><h6 class="mb-0 fw-bold">库存概览</h6></div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                {% for i in inventory %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ i.name }} <span class="text-muted small">({{ i.spec }})</span>
+                                    <span class="badge bg-secondary rounded-pill">{{ i.stock }} {{ i.unit }}</span>
+                                </li>
+                                {% empty %}
+                                <li class="list-group-item text-muted text-center py-4">暂无库存数据</li>
+                                {% endfor %}
+                            </ul>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'inventory_list' %}" class="btn btn-link text-decoration-none">进入库存管理 ></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

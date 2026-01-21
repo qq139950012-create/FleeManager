@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能耗数据分析</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f3f6f9; font-family: 'Segoe UI', Roboto, sans-serif; }
+        .dashboard-card { border: none; border-radius: 12px; background: white; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 20px; }
+        .rank-badge { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
+        .rank-1 { background-color: #f1c40f; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+        .rank-2 { background-color: #95a5a6; }
+        .rank-3 { background-color: #e67e22; }
+        .rank-other { background-color: #ecf0f1; color: #7f8c8d; }
+    </style>
+</head>
+<body class="pb-5">
+
+    <nav class="navbar navbar-dark bg-warning mb-4 shadow-sm" style="background: linear-gradient(45deg, #f1c40f, #f39c12);">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand fw-bold"><i class="fas fa-gas-pump me-2"></i>能耗监控中心</span>
+            <a href="{% url 'leader_dashboard' %}" class="btn btn-outline-light btn-sm text-dark border-white"><i class="fas fa-arrow-left me-1"></i>返回驾驶舱</a>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="dashboard-card p-4 d-flex align-items-center bg-white">
+                    <div class="me-4 text-warning display-4"><i class="fas fa-fire"></i></div>
+                    <div>
+                        <div class="text-muted text-uppercase small">{{ month_name }} 总油费/电费</div>
+                        <div class="h2 fw-bold text-dark mb-0">¥{{ total_fuel_cost }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="dashboard-card p-4 d-flex align-items-center bg-white">
+                    <div class="me-4 text-primary display-4"><i class="fas fa-fill-drip"></i></div>
+                    <div>
+                        <div class="text-muted text-uppercase small">{{ month_name }} 总消耗量 (升/度)</div>
+                        <div class="h2 fw-bold text-dark mb-0">{{ total_fuel_amount }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0">高能耗车辆排行 (按每公里成本)</h5>
+                <span class="badge bg-warning text-dark">共统计 {{ ranking_count }} 辆活跃车辆</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">排名</th>
+                            <th>车牌号</th>
+                            <th>本月行驶里程</th>
+                            <th>本月总油费</th>
+                            <th>每公里成本</th>
+                            <th>状态评价</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in top_guzzlers %}
+                        <tr>
+                            <td>
+                                <div class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">
+                                    {{ forloop.counter }}
+                                </div>
+                            </td>
+                            <td class="fw-bold">{{ item.plate }}</td>
+                            <td>{{ item.dist }} km</td>
+                            <td>¥{{ item.cost }}</td>
+                            <td class="fw-bold text-danger">¥{{ item.per_km }}/km</td>
+                            <td>
+                                {% if item.per_km > 2.0 %}
+                                    <span class="badge bg-danger">极高</span>
+                                {% elif item.per_km > 1.5 %}
+                                    <span class="badge bg-warning text-dark">偏高</span>
+                                {% else %}
+                                    <span class="badge bg-success">正常</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center text-muted py-4">本月暂无能耗数据</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

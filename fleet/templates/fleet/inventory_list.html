@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>库存管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f3f6f9; font-family: -apple-system, sans-serif; padding-bottom: 80px; }
+        .bg-gradient-warning { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .stock-num { font-size: 20px; font-weight: bold; width: 50px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-gradient-warning pt-4 pb-5 px-3 rounded-bottom-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-4 text-white">
+            <div>
+                <h4 class="fw-bold mb-0">库存管理</h4>
+                <div class="small opacity-75">实时监控与补货</div>
+            </div>
+            <a href="{% url 'repair_dashboard' %}" class="btn btn-sm btn-light text-warning rounded-pill px-3 fw-bold">
+                <i class="fas fa-arrow-left me-1"></i>返回
+            </a>
+        </div>
+        
+        <div class="input-group shadow-sm">
+            <span class="input-group-text border-0 bg-white"><i class="fas fa-search text-muted"></i></span>
+            <input type="text" class="form-control border-0" placeholder="搜索配件名称...">
+        </div>
+    </div>
+
+    <div class="container" style="margin-top: -20px;">
+        
+        {% for item in items %}
+        <div class="card mb-3">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="fw-bold mb-1">{{ item.name }}</h6>
+                        <div class="small text-muted">
+                            {{ item.spec }} (单位: {{ item.unit }})
+                            <span class="ms-2 badge bg-light text-dark border">
+                                分类：{% if item.category == "spare" %}备件{% else %}辅材{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center bg-light rounded-pill p-1">
+                        <button type="button" class="btn btn-sm btn-white text-danger rounded-circle shadow-sm" 
+                                onclick="openModal('{{ item.id }}', '{{ item.name }}', 'out')">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        
+                        <div class="stock-num {% if item.stock < 5 %}text-danger{% else %}text-dark{% endif %}">
+                            {{ item.stock }}
+                        </div>
+                        
+                        <button type="button" class="btn btn-sm btn-white text-success rounded-circle shadow-sm"
+                                onclick="openModal('{{ item.id }}', '{{ item.name }}', 'in')">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5 text-muted">
+            <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+            <p>暂无配件，请先添加</p>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <div class="fixed-bottom p-3">
+        <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold shadow-lg" data-bs-toggle="modal" data-bs-target="#addNewModal">
+            <i class="fas fa-plus me-2"></i>新增配件品类
+        </button>
+    </div>
+
+    <div class="modal fade" id="stockModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold" id="stockModalTitle">调整库存</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="stock_change">
+                        <input type="hidden" name="item_id" id="modalItemId">
+                        <input type="hidden" name="type" id="modalType">
+                        
+                        <div class="text-center mb-4">
+                            <h4 id="modalItemName" class="fw-bold"></h4>
+                            <div id="modalTypeLabel" class="badge mt-2 fs-6"></div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold">数量</label>
+                            <input type="number" name="quantity" class="form-control form-control-lg text-center fw-bold" value="1" min="1" required>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary rounded-pill py-2">确认提交</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addNewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">新增配件品类</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_new">
+                        <div class="mb-3">
+                            <label class="form-label small">配件名称</label>
+                            <input type="text" name="name" class="form-control" placeholder="例如：米其林轮胎" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">规格型号</label>
+                            <input type="text" name="spec" class="form-control" placeholder="例如：205/55 R16">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">单位</label>
+                            <input type="text" name="unit" class="form-control" placeholder="例如：个、升" required>
+                        </div>
+
+                        <!-- ✅ 新增：分类选择（备件/辅材） -->
+                        <div class="mb-4">
+                            <label class="form-label small">分类</label>
+                            <select name="category" class="form-select" required>
+                                <option value="spare" selected>备件</option>
+                                <option value="material">辅材</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-dark rounded-pill">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 控制出入库弹窗逻辑
+        function openModal(id, name, type) {
+            document.getElementById('modalItemId').value = id;
+            document.getElementById('modalItemName').innerText = name;
+            document.getElementById('modalType').value = type;
+            
+            const label = document.getElementById('modalTypeLabel');
+            if(type === 'in') {
+                label.className = 'badge bg-success';
+                label.innerText = '正在入库';
+                document.getElementById('stockModalTitle').innerText = '配件入库';
+            } else {
+                label.className = 'badge bg-danger';
+                label.innerText = '正在出库';
+                document.getElementById('stockModalTitle').innerText = '配件领用/出库';
+            }
+            
+            new bootstrap.Modal(document.getElementById('stockModal')).show();
+        }
+    </script>
+</body>
+</html>

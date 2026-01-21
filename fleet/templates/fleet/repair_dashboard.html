@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>维修中心</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f3f6f9; font-family: -apple-system, sans-serif; padding-bottom: 40px; }
+        .bg-header { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); padding-bottom: 3rem; border-radius: 0 0 20px 20px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 1rem; }
+        .btn-action { background: white; border: none; padding: 15px; border-radius: 12px; color: #333; font-weight: bold; display: flex; align-items: center; justify-content: space-between; text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .icon-box { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 15px; }
+    </style>
+</head>
+<body>
+    <div class="bg-header pt-4 px-3 shadow-sm text-white">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div><h4 class="fw-bold mb-0">维修中心</h4><div class="small opacity-75">{{ me.name }} ({{ me.get_role_display }})</div></div>
+            <a href="{% url 'logout' %}" class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold"><i class="fas fa-sign-out-alt me-1"></i>退出</a>
+        </div>
+    </div>
+    <div class="container" style="margin-top: -35px;">
+        <div class="row g-2 mb-4">
+            <div class="col-12">
+                <a href="{% url 'inventory_list' %}" class="btn-action">
+                    <div class="d-flex align-items-center"><div class="icon-box bg-warning bg-opacity-10 text-warning"><i class="fas fa-boxes"></i></div><div><div class="fs-6">库存管理</div><div class="small text-muted fw-normal">查看配件 / 入库 / 盘点</div></div></div><i class="fas fa-chevron-right text-muted opacity-25"></i>
+                </a>
+            </div>
+        </div>
+
+        <h6 class="fw-bold text-secondary ps-2 mb-2"><i class="fas fa-wrench me-2"></i>正在维修</h6>
+        {% if my_repairs %}
+            {% for repair in my_repairs %}
+            <div class="card border-start border-4 border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div><h5 class="fw-bold mb-1">{{ repair.vehicle.plate_number }}</h5><div class="small text-muted">{{ repair.create_at|date:"m-d H:i" }} 接单</div></div>
+                        <a href="{% url 'repair_detail' repair.id %}" class="btn btn-warning text-white rounded-pill px-4">继续维修</a>
+                    </div>
+                    <div class="mt-2 text-dark small"><span class="badge bg-warning text-dark me-2">{{ repair.fault_text }}</span> {{ repair.content }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card text-center py-4 text-muted small bg-white">当前没有正在进行的维修</div>
+        {% endif %}
+
+        <h6 class="fw-bold text-secondary ps-2 mb-2 mt-4"><i class="fas fa-bell me-2"></i>待接单列表</h6>
+        {% if pending_repairs %}
+            {% for repair in pending_repairs %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="fw-bold mb-1">{{ repair.vehicle.plate_number }}</h6>
+                            <span class="badge bg-danger bg-opacity-10 text-danger">{{ repair.fault_text }}</span>
+                        </div>
+                        <div class="text-end small text-muted">{{ repair.create_at|date:"m-d H:i" }}<br>{{ repair.driver.name }} 报修</div>
+                    </div>
+                    <hr class="my-3 opacity-10">
+                    <a href="{% url 'repair_start' repair.id %}" class="btn btn-outline-danger w-100 rounded-pill">接单开始维修</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5 text-muted"><p>暂无新报修</p></div>
+        {% endif %}
+    </div>
+</body>
+</html>

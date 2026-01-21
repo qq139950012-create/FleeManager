@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>出入库操作</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-3 bg-light">
+    <div class="container">
+        <div class="mb-3">
+            <a href="javascript:history.back()" class="text-decoration-none text-secondary">返回</a>
+        </div>
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-3">{{ item.name }}</h4>
+                <div class="alert alert-info">
+                    当前库存：<strong>{{ item.stock }}</strong> {{ item.unit }}
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">操作类型</label>
+                        {{ form.action }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">数量</label>
+                        {{ form.quantity }}
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">备注说明</label>
+                        {{ form.remark }}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-3 rounded-3 fw-bold">确认提交</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

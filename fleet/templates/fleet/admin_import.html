@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量导入 - 后台管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 fw-bold"><i class="fas fa-file-import me-2"></i>{{ title }}</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        
+                        <div class="alert alert-info small mb-4">
+                            <strong>操作步骤：</strong><br>
+                            1. 下载标准模板 (包含表头)<br>
+                            2. 在Excel中填入数据 (请勿修改表头顺序)<br>
+                            3. 上传填好的 Excel 文件
+                        </div>
+
+                        <div class="mb-4 text-center">
+                            {% if type == 'vehicle' %}
+                                <a href="{% url 'admin_download_template' %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download me-1"></i> 下载【车辆】导入模板.xlsx
+                                </a>
+                            {% elif type == 'employee' %}
+                                <a href="{% url 'admin_download_employee_template' %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download me-1"></i> 下载【人员】导入模板.xlsx
+                                </a>
+                            {% elif type == 'inventory' %}
+                                <a href="{% url 'admin_download_inventory_template' %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download me-1"></i> 下载【配件】导入模板.xlsx
+                                </a>
+                            {% endif %}
+                        </div>
+
+                        <hr>
+
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ form.file.label_tag }}
+                                {{ form.file }}
+                            </div>
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-upload me-1"></i> 开始导入
+                                </button>
+                                <a href="{% url 'admin_dashboard' %}" class="btn btn-link text-muted mt-2">取消返回</a>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

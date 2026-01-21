@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧车队 - 领导驾驶舱</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.1/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary-bg: #f3f6f9;
+            --nav-bg: #1a202c;
+            --card-radius: 16px;
+        }
+        body { background-color: var(--primary-bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #4a5568; }
+        
+        /* 1. 导航栏优化 */
+        .navbar-leader { background-color: var(--nav-bg); padding: 10px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .navbar-brand { font-size: 1.1rem; letter-spacing: 1px; }
+        
+        /* 2. 欢迎横幅 */
+        .welcome-banner {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-radius: var(--card-radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 3. 卡片样式 */
+        .card-stat { 
+            border: none; 
+            border-radius: var(--card-radius); 
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .card-stat:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); }
+        
+        .icon-box { 
+            width: 56px; height: 56px; 
+            border-radius: 14px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.6rem; 
+            flex-shrink: 0;
+        }
+
+        /* 4. 快捷入口按钮 (已优化为 4 个) */
+        .shortcut-btn { 
+            text-decoration: none; color: #2d3748; 
+            display: flex; align-items: center; 
+            padding: 14px 16px; /* 稍微调小一点内边距，让4个放得下 */
+            border-radius: 12px; 
+            background: #f8fafc; border: 1px solid #edf2f7; 
+            transition: all 0.2s; 
+        }
+        .shortcut-btn:hover { background-color: white; border-color: #3b82f6; transform: translateX(5px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        /* 5. 手机端适配 */
+        @media (max-width: 768px) {
+            .welcome-banner { flex-direction: column; align-items: flex-start; padding: 15px; }
+            .welcome-date { font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px; }
+            .card-stat { margin-bottom: 15px; }
+            .navbar-brand span { display: none; }
+            .col-6-mobile { width: 50%; }
+        }
+    </style>
+</head>
+<body class="pb-5">
+
+    <nav class="navbar navbar-dark navbar-leader mb-3">
+        <div class="container-fluid px-3 px-lg-4">
+            <span class="navbar-brand fw-bold text-white">
+                <i class="fas fa-truck-fast me-2 text-primary"></i>
+                <span class="d-none d-md-inline">智慧车队云平台</span>
+                <span class="d-md-none">智慧车队</span>
+            </span>
+            <div>
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-secondary text-white-50 border-0">
+                    <i class="fas fa-power-off me-1"></i> <span class="d-none d-md-inline">退出系统</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-3 px-lg-4">
+        
+        <div class="welcome-banner">
+            <div>
+                <div class="welcome-date small"><i class="far fa-calendar-alt me-1"></i> {{ today|date:"Y年m月d日" }}</div>
+                <h4 class="m-0 fw-bold">👋 欢迎您，{{ me.name }}</h4>
+                <div class="small mt-1 opacity-75">当前角色：{{ me.get_role_display }}</div>
+            </div>
+            <div class="d-none d-md-block">
+                <i class="fas fa-chart-line fa-3x opacity-25"></i>
+            </div>
+        </div>
+        
+        <div class="row mb-4 g-3">
+            <div class="col-6 col-md-3 col-6-mobile">
+                <div class="card card-stat p-3">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center">
+                        <div class="icon-box bg-danger bg-opacity-10 text-danger mb-2 mb-md-0 me-md-3">
+                            <i class="fas fa-yen-sign"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-bold text-uppercase">本月成本</div>
+                            <h3 class="fw-bold mb-0 text-dark">¥{{ cost.total|floatformat:0 }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-3 col-6-mobile">
+                <div class="card card-stat p-3">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center">
+                        <div class="icon-box bg-success bg-opacity-10 text-success mb-2 mb-md-0 me-md-3">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-bold text-uppercase">出勤率</div>
+                            <h3 class="fw-bold mb-0 text-dark">{{ rate }}%</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-3 col-6-mobile">
+                <div class="card card-stat p-3">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center">
+                        <div class="icon-box bg-warning bg-opacity-10 text-warning mb-2 mb-md-0 me-md-3">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-bold text-uppercase">维修中</div>
+                            <h3 class="fw-bold mb-0 text-dark">{{ v_stats.repairing }} <span class="fs-6 text-muted fw-normal">辆</span></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-3 col-6-mobile">
+                <div class="card card-stat p-3">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center">
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary mb-2 mb-md-0 me-md-3">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small fw-bold text-uppercase">待办</div>
+                            <h3 class="fw-bold mb-0 text-dark">{{ alerts.bonus }} <span class="fs-6 text-muted fw-normal">项</span></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card card-stat mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold m-0 text-dark"><i class="fas fa-chart-area text-primary me-2"></i>半年成本趋势</h6>
+                        </div>
+                        <div id="trendChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <div class="card card-stat">
+                    <div class="card-header bg-white border-0 pt-4 pb-2">
+                        <h6 class="fw-bold m-0 text-dark"><i class="fas fa-fire text-danger me-2"></i>本月车辆高消费榜 (TOP 5)</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light text-muted small">
+                                <tr>
+                                    <th class="ps-4 border-0 rounded-start">排名</th>
+                                    <th class="border-0">车牌号</th>
+                                    <th class="border-0">费用构成</th>
+                                    <th class="text-end pe-4 border-0 rounded-end">总额</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in top_5 %}
+                                <tr>
+                                    <td class="ps-4">
+                                        {% if forloop.counter <= 3 %}
+                                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2">No.{{ forloop.counter }}</span>
+                                        {% else %}
+                                            <span class="badge bg-light text-secondary rounded-pill px-2">{{ forloop.counter }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold text-dark">{{ item.plate }}</td>
+                                    <td>
+                                        {% if item.total and item.total > 0 %}
+                                            <div class="progress" style="height: 6px; width: 100px; border-radius: 3px;">
+                                                <div class="progress-bar bg-warning" role="progressbar" style="width: {% widthratio item.fuel item.total 100 %}%"></div>
+                                                <div class="progress-bar bg-primary" role="progressbar" style="width: {% widthratio item.repair item.total 100 %}%"></div>
+                                            </div>
+                                            <div class="small text-muted mt-1" style="font-size: 0.7rem;">
+                                                <span class="text-warning">● 油电</span> 
+                                                <span class="text-primary ms-1">● 维修</span>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted small">暂无费用</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4 fw-bold">¥{{ item.total|floatformat:0 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="text-muted opacity-50">
+                                            <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                                            <p class="mb-0">本月暂无高消费记录</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                
+                <div class="card card-stat mb-4">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3 text-dark">快捷管理</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'dispatch_dashboard' %}" class="shortcut-btn">
+                                <div class="icon-box bg-primary bg-opacity-10 text-primary me-3" style="width:40px;height:40px;font-size:1.2rem;">
+                                    <i class="fas fa-desktop"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">总调度台</div>
+                                    <div class="small text-muted" style="font-size: 0.75rem;">派单 / 监控</div>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto text-black-50 small"></i>
+                            </a>
+
+                            <a href="{% url 'team_dashboard' %}" class="shortcut-btn">
+                                <div class="icon-box bg-success bg-opacity-10 text-success me-3" style="width:40px;height:40px;font-size:1.2rem;">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">人员考勤</div>
+                                    <div class="small text-muted" style="font-size: 0.75rem;">签到 / 奖金</div>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto text-black-50 small"></i>
+                            </a>
+
+                            <a href="{% url 'dispatch_repair_oversight' %}" class="shortcut-btn">
+                                <div class="icon-box bg-danger bg-opacity-10 text-danger me-3" style="width:40px;height:40px;font-size:1.2rem;">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">维修报表</div>
+                                    <div class="small text-muted" style="font-size: 0.75rem;">故障 / 配件</div>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto text-black-50 small"></i>
+                            </a>
+
+                            <a href="{% url 'dispatch_energy_oversight' %}" class="shortcut-btn">
+                                <div class="icon-box bg-warning bg-opacity-10 text-warning me-3" style="width:40px;height:40px;font-size:1.2rem;">
+                                    <i class="fas fa-gas-pump"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">能耗报表</div>
+                                    <div class="small text-muted" style="font-size: 0.75rem;">油耗 / 电耗</div>
+                                </div>
+                                <i class="fas fa-chevron-right ms-auto text-black-50 small"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-stat">
+                    <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold m-0 text-dark">
+                            <i class="fas fa-trophy text-warning me-2"></i>班组里程榜
+                        </h6>
+                        <span class="badge bg-warning text-dark rounded-pill">Top 4</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush rounded-bottom">
+                            {% for r in team_rankings %}
+                            <li class="list-group-item border-0 d-flex justify-content-between align-items-center py-3 px-4">
+                                <div class="d-flex align-items-center">
+                                    {% if forloop.counter == 1 %}
+                                        <img src="https://img.icons8.com/emoji/48/000000/1st-place-medal-emoji.png" width="28" class="me-3">
+                                    {% elif forloop.counter == 2 %}
+                                        <img src="https://img.icons8.com/emoji/48/000000/2nd-place-medal-emoji.png" width="28" class="me-3">
+                                    {% elif forloop.counter == 3 %}
+                                        <img src="https://img.icons8.com/emoji/48/000000/3rd-place-medal-emoji.png" width="28" class="me-3">
+                                    {% else %}
+                                        <span class="badge bg-light text-secondary rounded-circle me-3" style="width:28px;height:28px;line-height:28px;text-align:center;">{{ forloop.counter }}</span>
+                                    {% endif %}
+                                    <span class="fw-bold text-dark">{{ r.team }}</span>
+                                </div>
+                                <span class="fw-bold text-primary font-monospace">{{ r.total_km }} <span class="small text-muted fw-normal">km</span></span>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item border-0 text-center py-4">
+                                <div class="text-muted opacity-50">
+                                    <i class="fas fa-flag fa-2x mb-2"></i>
+                                    <p class="mb-0 small">本月暂无里程数据</p>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var chartDom = document.getElementById('trendChart');
+        var myChart = echarts.init(chartDom);
+        var option = {
+            // 图表位置调整
+            grid: { left: '2%', right: '4%', bottom: '10%', top: '18%', containLabel: true },
+            tooltip: { trigger: 'axis' },
+            // 图例置顶，不重叠
+            legend: { top: 0, right: 10, itemWidth: 12, itemHeight: 8 },
+            xAxis: { 
+                type: 'category', 
+                data: {{ chart_labels|safe }},
+                axisLine: { lineStyle: { color: '#e2e8f0' } },
+                axisLabel: { color: '#64748b' }
+            },
+            yAxis: { 
+                type: 'value',
+                splitLine: { lineStyle: { type: 'dashed', color: '#f1f5f9' } }
+            },
+            series: [
+                {
+                    name: '油/电',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    itemStyle: { color: '#f59e0b' },
+                    areaStyle: { 
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(245, 158, 11, 0.2)' }, 
+                            { offset: 1, color: 'rgba(245, 158, 11, 0)' }
+                        ]) 
+                    },
+                    data: {{ chart_fuel|safe }}
+                },
+                {
+                    name: '维修',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',
+                    itemStyle: { color: '#ef4444' },
+                    data: {{ chart_repair|safe }}
+                }
+            ]
+        };
+        myChart.setOption(option);
+        window.addEventListener('resize', function() { myChart.resize(); });
+    </script>
+</body>
+</html>

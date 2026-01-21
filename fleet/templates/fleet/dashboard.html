@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>车辆控制台 - {{ vehicle.plate_number }}</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Roboto, sans-serif; }
+        /* 顶部大卡片 */
+        .vehicle-header {
+            background: linear-gradient(135deg, #0061f2 0%, #00ba94 100%);
+            color: white; padding: 30px 20px 50px; border-radius: 0 0 25px 25px;
+            box-shadow: 0 10px 20px rgba(0, 97, 242, 0.2); text-align: center;
+        }
+        .plate-number { font-size: 2rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .vehicle-status { display: inline-block; padding: 5px 15px; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 0.9rem; backdrop-filter: blur(5px); }
+        
+        /* 操作按钮区 */
+        .action-grid { margin-top: -30px; padding: 0 15px; }
+        .action-btn {
+            background: white; border: none; border-radius: 15px; padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center;
+            display: block; text-decoration: none; color: #333; transition: transform 0.2s;
+            height: 100%;
+        }
+        .action-btn:active { transform: scale(0.98); background: #f1f3f5; }
+        .icon-circle {
+            width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; margin: 0 auto 10px; color: white;
+        }
+        
+        /* 颜色定义 */
+        .bg-fuel { background: linear-gradient(45deg, #f6d365, #fda085); }
+        .bg-repair { background: linear-gradient(45deg, #ff9a9e, #fecfef); color: #d63031; }
+        .bg-urea { background: linear-gradient(45deg, #a18cd1, #fbc2eb); }
+        .bg-stop { background: white; border: 2px solid #e74a3b; color: #e74a3b; }
+        .bg-stop .icon-circle { background: #e74a3b; color: white; }
+
+        /* 信息列表 */
+        .info-card { background: white; border-radius: 15px; padding: 20px; margin: 20px 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .info-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f1f1; font-size: 0.95rem; }
+        .info-item:last-child { border-bottom: none; }
+        .label { color: #888; }
+        .value { font-weight: 600; color: #333; }
+    </style>
+</head>
+<body>
+
+    <div class="vehicle-header">
+        <div class="plate-number">{{ vehicle.plate_number }}</div>
+        <div class="vehicle-status">
+            {% if vehicle.status == 'working' %}
+                <i class="fas fa-steering-wheel me-1"></i> 作业中 ({{ vehicle.current_driver.name }})
+            {% elif vehicle.status == 'repairing' %}
+                <i class="fas fa-wrench me-1"></i> 维修中
+            {% else %}
+                <i class="fas fa-check me-1"></i> 空闲
+            {% endif %}
+        </div>
+        <div class="mt-2 small opacity-75">{{ vehicle.vehicle_id }} | {{ vehicle.brand_model }}</div>
+    </div>
+
+    <div class="container action-grid">
+        <div class="row g-3">
+            <div class="col-4">
+                <a href="{% url 'vehicle_add' vehicle.vehicle_id 'fuel' %}" class="action-btn">
+                    <div class="icon-circle bg-fuel"><i class="fas fa-gas-pump"></i></div>
+                    <div class="fw-bold small">加油</div>
+                </a>
+            </div>
+            <div class="col-4">
+                <a href="{% url 'vehicle_add' vehicle.vehicle_id 'urea' %}" class="action-btn">
+                    <div class="icon-circle bg-urea"><i class="fas fa-flask"></i></div>
+                    <div class="fw-bold small">加尿素</div>
+                </a>
+            </div>
+            <div class="col-4">
+                <a href="{% url 'vehicle_add' vehicle.vehicle_id 'charge' %}" class="action-btn">
+                    <div class="icon-circle bg-success text-white"><i class="fas fa-bolt"></i></div>
+                    <div class="fw-bold small">充电</div>
+                </a>
+            </div>
+            
+            <div class="col-12">
+                <a href="{% url 'add_repair' vehicle.vehicle_id %}" class="action-btn d-flex align-items-center justify-content-center p-3">
+                    <div class="icon-circle bg-danger me-3 mb-0" style="width: 40px; height: 40px; font-size: 18px;">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="text-start">
+                        <div class="fw-bold text-danger">故障报修</div>
+                        <div class="small text-muted" style="font-size: 11px;">车辆故障请点击此处上报</div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 mt-4">
+                <a href="{% url 'vehicle_end' vehicle.vehicle_id %}" class="btn btn-outline-danger w-100 py-3 rounded-4 fw-bold shadow-sm" style="border-width: 2px;">
+                    <i class="fas fa-power-off me-2"></i>结束作业 / 收车回库
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h6 class="fw-bold text-secondary mb-3"><i class="fas fa-info-circle me-2"></i>车辆档案</h6>
+        <div class="info-item">
+            <span class="label">当前里程</span>
+            <span class="value font-monospace">{{ vehicle.current_mileage }} km</span>
+        </div>
+        <div class="info-item">
+            <span class="label">下次保养</span>
+            <span class="value {% if vehicle.current_mileage >= vehicle.next_maintenance_mileage %}text-danger{% endif %}">
+                {{ vehicle.next_maintenance_mileage }} km
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="label">年检日期</span>
+            <span class="value">{{ vehicle.inspection_expiry|default:"-" }}</span>
+        </div>
+        <div class="info-item">
+            <span class="label">保险日期</span>
+            <span class="value">{{ vehicle.insurance_expiry|default:"-" }}</span>
+        </div>
+    </div>
+
+    <div class="text-center pb-4">
+        <a href="{% url 'home' %}" class="text-decoration-none text-muted small">
+            <i class="fas fa-home me-1"></i>返回首页
+        </a>
+    </div>
+
+</body>
+</html>

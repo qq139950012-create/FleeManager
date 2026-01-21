@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>调度控制台</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>body{background:#f0f2f5;font-family:sans-serif;}</style>
+</head>
+<body class="p-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-satellite-dish text-primary me-2"></i>调度控制台</h4>
+        <a href="{% url 'home' %}" class="btn btn-light border">返回首页</a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} small">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- ✅ 发布任务 -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white fw-bold"><i class="fas fa-plus-circle me-2 text-success"></i>发布任务</div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">下发班组</label>
+                        {{ form.target_team }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">截止时间</label>
+                        {{ form.deadline }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">标题</label>
+                        {{ form.title }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small text-muted">内容</label>
+                        {{ form.detail }}
+                    </div>
+                </div>
+                <button class="btn btn-primary mt-3"><i class="fas fa-paper-plane me-1"></i>发布并下发给班长</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ✅ 任务列表（调度看反馈） -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white fw-bold"><i class="fas fa-list me-2 text-primary"></i>任务列表</div>
+        <div class="card-body">
+            {% for t in active_tasks %}
+                <div class="p-3 rounded border mb-2 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold">{{ t.title }}</div>
+                            <div class="small text-muted">班组：{{ t.target_team }} ｜ 截止：{{ t.deadline }}</div>
+                            <div class="small mt-1">{{ t.detail }}</div>
+                        </div>
+                        <div class="text-end">
+                            {% if t.status == 'pending' %}
+                                <span class="badge bg-secondary">待班长分配</span>
+                            {% elif t.status == 'doing' %}
+                                <span class="badge bg-warning text-dark">处理中</span>
+                            {% else %}
+                                <span class="badge bg-success">已完成</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-muted small">暂无任务</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ✅ 车辆实时监控（保留你原来的） -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white fw-bold">车辆实时监控</div>
+        <div class="card-body">
+            <div class="row g-3">
+                {% for v in vehicles %}
+                <div class="col-md-3 col-6">
+                    <div class="p-3 rounded border text-center position-relative"
+                         style="background: {% if v.status == 'working' %}#e6fffa{% elif v.status == 'repairing' %}#fff5f5{% else %}#fff{% endif %}">
+
+                        <h5 class="fw-bold mb-1">{{ v.plate_number }}</h5>
+                        <div class="small text-muted">{{ v.vehicle_id }}</div>
+
+                        <div class="mt-2">
+                            {% if v.status == 'working' %}
+                                <span class="badge bg-success">作业中</span>
+                                <div class="small mt-1 text-success">{{ v.current_driver.name }}</div>
+                            {% elif v.status == 'repairing' %}
+                                <span class="badge bg-danger">维修中</span>
+                            {% else %}
+                                <span class="badge bg-secondary">空闲</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录 - 智慧车队管理系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            /* 专业的深色背景图 */
+            background: url('https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2071&q=80') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 25, 47, 0.7); /* 深蓝遮罩 */
+        }
+        .login-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 420px;
+            backdrop-filter: blur(10px);
+        }
+        .brand-logo {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #0061f2 0%, #00ba94 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 32px;
+            box-shadow: 0 5px 15px rgba(0, 97, 242, 0.3);
+        }
+        .form-control {
+            height: 50px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding-left: 20px;
+        }
+        .form-control:focus {
+            background-color: #fff;
+            border-color: #0061f2;
+            box-shadow: 0 0 0 0.25rem rgba(0, 97, 242, 0.1);
+        }
+        .btn-login {
+            height: 50px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #0061f2, #00ba94);
+            border: none;
+            font-weight: bold;
+            font-size: 16px;
+            letter-spacing: 1px;
+            transition: transform 0.2s;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 97, 242, 0.4);
+            background: linear-gradient(90deg, #0056d6, #00a381);
+        }
+        .input-group-text {
+            background: none; border: none; position: absolute; right: 15px; top: 15px; z-index: 10; color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+
+    <div class="login-card animate__animated animate__fadeInUp">
+        <div class="brand-logo">
+            <i class="fas fa-truck-fast"></i>
+        </div>
+        <h4 class="text-center fw-bold mb-1 text-dark">智慧车队管理系统</h4>
+        <p class="text-center text-muted mb-4 small">Fleet Management System Pro</p>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="alert alert-danger py-2 small border-0 bg-danger text-white bg-opacity-75">
+                <i class="fas fa-exclamation-circle me-1"></i> 账号或密码错误，请重试
+            </div>
+            {% endif %}
+
+            <div class="mb-3 position-relative">
+                <input type="text" name="username" class="form-control" placeholder="请输入账号 / 手机号" required autofocus>
+            </div>
+
+            <div class="mb-4 position-relative">
+                <input type="password" name="password" class="form-control" placeholder="请输入密码" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 btn-login text-white">
+                立即登录 <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+        </form>
+
+        <div class="text-center mt-4 text-muted small">
+            &copy; 2026 绿源汽车运输作业区 | 技术支持
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班组管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f3f6f9; font-family: -apple-system, sans-serif; padding-bottom: 40px; }
+        .bg-gradient-purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        
+        .stat-card { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; text-align: center; color: white; }
+        .stat-num { font-size: 24px; font-weight: bold; line-height: 1.2; }
+        .stat-label { font-size: 11px; opacity: 0.8; }
+        
+        .avatar-circle { width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #4a5568; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .dot-working { background-color: #48bb78; box-shadow: 0 0 0 2px rgba(72,187,120,0.2); }
+        .dot-idle { background-color: #ecc94b; }
+        .dot-off { background-color: #cbd5e0; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-gradient-purple pt-4 pb-5 px-3 rounded-bottom-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-4 text-white">
+            <div>
+                <h4 class="fw-bold mb-0">{{ me.team }}管理台</h4>
+                <div class="small opacity-75">{{ me.name }} (班长)</div>
+            </div>
+            <a href="{% url 'home' %}" class="btn btn-sm btn-light text-primary rounded-pill px-3 fw-bold">
+                <i class="fas fa-arrow-left me-1"></i>返回
+            </a>
+        </div>
+
+        <div class="row g-2">
+            <div class="col-4">
+                <div class="stat-card">
+                    <div class="stat-num">{{ stats.working }}</div>
+                    <div class="stat-label">作业中</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="stat-card">
+                    <div class="stat-num">{{ stats.on_duty }}</div>
+                    <div class="stat-label">待命</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="stat-card">
+                    <div class="stat-num">{{ stats.total }}</div>
+                    <div class="stat-label">总人数</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="margin-top: -20px;">
+        
+        {% if pending_bonuses %}
+        <div class="card mb-3 border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="fw-bold text-warning mb-0"><i class="fas fa-bell me-2"></i>待分配奖金</h6>
+                    <span class="badge bg-warning text-dark">{{ pending_bonuses.count }} 笔</span>
+                </div>
+                {% for bonus in pending_bonuses %}
+                <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top">
+                    <div>
+                        <div class="fw-bold">{{ bonus.title }}</div>
+                        <div class="small text-muted">总额: ¥{{ bonus.total_amount }}</div>
+                    </div>
+                    <a href="{% url 'leader_bonus_distribute' bonus.id %}" class="btn btn-sm btn-dark rounded-pill px-3">
+                        去分配 <i class="fas fa-chevron-right ms-1"></i>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <h6 class="fw-bold text-secondary ps-2 mb-3 mt-4 d-flex justify-content-between align-items-center">
+  <span>组员动态</span>
+  <span class="text-muted small">共 {{ stats.total }} 人</span>
+</h6>
+
+<!-- ✅ 搜索框（前端过滤，不改后端也能用） -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <input id="memberSearch" type="text" class="form-control form-control-sm"
+           placeholder="搜索：姓名 / 手机 / 车牌…">
+  </div>
+</div>
+
+<!-- ✅ 状态筛选 -->
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  <button class="btn btn-sm btn-outline-secondary active" data-filter="all">全部</button>
+  <button class="btn btn-sm btn-outline-success" data-filter="working">行驶中</button>
+  <button class="btn btn-sm btn-outline-warning" data-filter="on_duty">待命</button>
+  <button class="btn btn-sm btn-outline-dark" data-filter="off_duty">休息</button>
+</div>
+
+<div class="card">
+  <div class="list-group list-group-flush" id="memberList">
+    {% for item in members %}
+    <div class="list-group-item py-3 member-row"
+         data-status="{{ item.status }}"
+         data-text="{{ item.info.name }} {{ item.info.phone }} {% if item.vehicle %}{{ item.vehicle.plate_number }}{% endif %}">
+      <div class="d-flex align-items-center">
+        <div class="avatar-circle me-3">
+          {{ item.info.name|first }}
+        </div>
+
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold">{{ item.info.name }}</h6>
+
+            {% if item.status == 'working' %}
+              <span class="badge bg-success bg-opacity-10 text-success rounded-pill">
+                <i class="fas fa-steering-wheel me-1"></i>行驶中
+              </span>
+            {% elif item.status == 'on_duty' %}
+              <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill">待命</span>
+            {% else %}
+              <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill">休息</span>
+            {% endif %}
+          </div>
+
+          <div class="small text-muted mt-1">
+            {% if item.vehicle %}
+              <span class="text-primary">
+                <i class="fas fa-truck me-1"></i>{{ item.vehicle.plate_number }}
+              </span>
+            {% else %}
+              <span class="text-black-50">未出车</span>
+            {% endif %}
+            <span class="mx-1">|</span> {{ item.info.phone }}
+          </div>
+        </div>
+
+        <!-- ✅ 右侧操作：只有“行驶中”且有车辆时，显示代收车 -->
+        <div class="ms-2">
+          {% if item.vehicle %}
+            <form method="post" action="{% url 'leader_force_end' item.vehicle.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit"
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('确定要代收车吗？这会解绑该司机当前车辆');">
+                代收车
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="list-group-item text-muted small text-center py-4">暂无组员</div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  // ✅ 前端搜索过滤
+  const searchInput = document.getElementById('memberSearch');
+  const rows = () => Array.from(document.querySelectorAll('.member-row'));
+  const applyFilter = (status) => {
+    const q = (searchInput.value || '').trim().toLowerCase();
+    rows().forEach(r => {
+      const text = (r.dataset.text || '').toLowerCase();
+      const matchText = !q || text.includes(q);
+      const matchStatus = (status === 'all') || (r.dataset.status === status);
+      r.style.display = (matchText && matchStatus) ? '' : 'none';
+    });
+  };
+
+  // 搜索触发
+  searchInput && searchInput.addEventListener('input', () => {
+    const activeBtn = document.querySelector('button[data-filter].active');
+    applyFilter(activeBtn ? activeBtn.dataset.filter : 'all');
+  });
+
+  // 状态筛选按钮
+  document.querySelectorAll('button[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('button[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyFilter(btn.dataset.filter);
+    });
+  });
+</script>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

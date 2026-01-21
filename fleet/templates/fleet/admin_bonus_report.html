@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>奖金分配报表</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-4">
+    <div class="container" style="max-width: 800px;">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0">奖金分配报表：{{ batch.title }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-4"><strong>班组：</strong>{{ batch.team_name }}</div>
+                    <div class="col-md-4"><strong>执行班长：</strong>{{ batch.leader.name }}</div>
+                    <div class="col-md-4"><strong>分配时间：</strong>{{ batch.distributed_at }}</div>
+                </div>
+                
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>收款组员</th>
+                            <th>分配金额</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in details %}
+                        <tr>
+                            <td>{{ d.receiver.name }}</td>
+                            <td class="fw-bold text-success">¥{{ d.amount }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-active fw-bold">
+                            <td>总计</td>
+                            <td>¥{{ batch.total_amount }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <div class="text-center mt-4">
+                    <a href="{% url 'admin_bonus_list' %}" class="btn btn-outline-secondary">返回列表</a>
+                    <button onclick="window.print()" class="btn btn-info text-white ms-2">打印报表</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

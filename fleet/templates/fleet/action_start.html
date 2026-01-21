@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>开始作业</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #f8f9fa; }
+        .form-card { border: none; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .btn-submit { height: 55px; border-radius: 15px; font-weight: bold; font-size: 1.1rem; }
+        .form-label { font-weight: 600; color: #495057; }
+
+        /* ✅ 让提示/错误图标统一左侧对齐 */
+        .tip-icon{
+            width: 18px;           /* 图标占位宽度，保证每行对齐 */
+            display: inline-block;
+            text-align: left;
+            margin-right: 6px;     /* 等效于 me-1，但更一致 */
+        }
+    </style>
+</head>
+
+<body class="p-3">
+<div class="container">
+
+    <div class="mb-4">
+        <a href="javascript:history.back()" class="text-decoration-none text-secondary">
+            <i class="fas fa-chevron-left me-1"></i> 返回控制台
+        </a>
+    </div>
+
+    <div class="card form-card">
+        <div class="card-body p-4 text-center">
+
+            <div class="mb-4">
+                <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                     style="width: 70px; height: 70px;">
+                    <i class="fas fa-play fa-2x"></i>
+                </div>
+                <h4 class="fw-bold mb-1">开始作业 (出车)</h4>
+                <p class="text-muted small mb-0">{{ vehicle.plate_number }}</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} small">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.errors %}
+                <div class="alert alert-danger small text-start">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <i class="fas fa-exclamation-circle tip-icon"></i>{{ error }}<br>
+                        {% endfor %}
+                    {% endfor %}
+
+                    {% for error in form.non_field_errors %}
+                        <i class="fas fa-exclamation-circle tip-icon"></i>{{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="text-start mb-4">
+                    <label class="form-label">{{ form.current_mileage.label }}</label>
+                    {{ form.current_mileage }}
+
+                    <div class="form-text text-muted">
+                        当前系统记录里程：{{ vehicle.current_mileage|default:"0" }} km
+                    </div>
+
+                </div>
+
+                <div class="alert alert-light text-start border-0 small text-muted">
+                    <i class="fas fa-info-circle tip-icon"></i>
+                    确认后，车辆将切换为“作业中”状态，并绑定到您的账号。
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 btn-submit shadow mt-2">
+                    确认出车
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

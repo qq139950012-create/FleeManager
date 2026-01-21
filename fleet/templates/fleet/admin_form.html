@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - 管理后台</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: -apple-system, sans-serif; }
+        .card { border-radius: 15px; border: none; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .form-control, .form-select { padding: 10px 15px; border-radius: 8px; }
+        .btn-primary { padding: 10px 30px; border-radius: 8px; }
+    </style>
+</head>
+<body class="py-5">
+
+    <div class="container" style="max-width: 600px;">
+        <div class="card">
+            <div class="card-header bg-white border-0 pt-4 pb-0 text-center">
+                <h4 class="fw-bold">{{ title }}</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary small">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="text-danger small mt-1">{{ field.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    {% if title == '车辆管理' and form.instance.pk %}
+                    <div class="text-center my-4 p-3 bg-light rounded-3 border border-dashed">
+                        <h6 class="text-primary fw-bold mb-3"><i class="fas fa-qrcode me-2"></i>车辆绑定二维码</h6>
+                        <img src="{% url 'generate_qrcode' form.instance.id %}" alt="车辆二维码" class="img-fluid bg-white p-2 rounded shadow-sm" style="width: 180px; height: 180px;">
+                        <div class="small text-muted mt-2">
+                            <i class="fas fa-print me-1"></i> 请打印并张贴在车内<br>司机扫描此码即可直接绑定车辆
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary fw-bold">保存信息</button>
+                        <a href="{% url 'admin_dashboard' %}" class="btn btn-light text-muted">返回列表</a>
+                        
+                        {% if form.instance.pk %}
+                        <button type="submit" name="delete" class="btn btn-outline-danger btn-sm mt-3 border-0" onclick="return confirm('确定要删除吗？')">删除此条记录</button>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

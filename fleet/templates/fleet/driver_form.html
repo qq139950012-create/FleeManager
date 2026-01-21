@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>填写记录</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; font-family: -apple-system, sans-serif; padding-bottom: 40px; }
+        
+        /* 1. 头部样式：完全独立，不与下方重叠 */
+        .page-header { 
+            padding: 20px; 
+            color: white; 
+            /* 移除圆角，做成普通的通栏头部 */
+            margin-bottom: 20px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-fuel { background: #0052d4; }
+        .header-urea { background: #0093E9; }
+        .header-charge { background: #F7971E; }
+        
+        .header-content { display: flex; align-items: center; }
+        .header-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px; }
+
+        /* 2. 表单卡片：没有任何负边距 */
+        .form-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+        }
+
+        /* 3. 输入框强制样式：确保绝对能点 */
+        input.form-control, textarea.form-control, select.form-select {
+            background-color: #fff !important; 
+            pointer-events: auto !important; /* 强制允许点击 */
+            z-index: 9999;
+            border: 1px solid #ced4da;
+        }
+        
+        /* 输入框聚焦时高亮，方便确认是否点中 */
+        .form-control:focus { border-color: #0052d4; box-shadow: 0 0 0 0.25rem rgba(0, 82, 212, 0.25); }
+    </style>
+</head>
+<body>
+
+    <div class="page-header {% if form.initial.record_type == 'fuel' %}header-fuel{% elif form.initial.record_type == 'urea' %}header-urea{% else %}header-charge{% endif %}">
+        <div class="header-content">
+            <div class="header-icon">
+                {% if form.initial.record_type == 'fuel' %}<i class="fas fa-gas-pump"></i>
+                {% elif form.initial.record_type == 'urea' %}<i class="fas fa-flask"></i>
+                {% else %}<i class="fas fa-bolt"></i>{% endif %}
+            </div>
+            <div>
+                <h5 class="fw-bold mb-0">
+                    {% if form.initial.record_type == 'fuel' %}加油登记
+                    {% elif form.initial.record_type == 'urea' %}尿素登记
+                    {% else %}充电登记{% endif %}
+                </h5>
+                <div class="small opacity-75">{{ vehicle.plate_number }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <form method="post" enctype="multipart/form-data" class="form-card">
+            {% csrf_token %}
+            <input type="hidden" id="recordType" name="record_type" value="{{ form.initial.record_type }}">
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-secondary">当前里程 (km)</label>
+                <input type="number" name="mileage" class="form-control form-control-lg" required step="1" placeholder="请输入里程" value="{{ form.mileage.value|default:'' }}">
+            </div>
+
+            {% if form.initial.record_type == 'fuel' %}
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-secondary">加油地点</label>
+                {{ form.location_type }}
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-secondary">
+                    {% if form.initial.record_type == 'charge' %}充电度数 (kWh){% else %}加注量 (L){% endif %}
+                </label>
+                <input type="number" name="volume" class="form-control form-control-lg" required step="0.01" placeholder="请输入数值" value="{{ form.volume.value|default:'' }}" style="font-size: 18px; font-weight: bold; color: #0052d4;">
+            </div>
+
+            <div id="cost-container" style="display: block;">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-secondary">总金额 (元)</label>
+                    <input type="number" name="cost" id="id_cost" class="form-control" step="0.01" placeholder="0.00" value="{{ form.cost.value|default:'' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-secondary">凭证照片</label>
+                    <input type="file" name="receipt" class="form-control">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold small text-secondary">备注</label>
+                <textarea name="remark" class="form-control" rows="2">{{ form.remark.value|default:'' }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3" style="font-size: 16px;">提交记录</button>
+            <div class="text-center mt-3">
+                <a href="{% url 'home' %}" class="text-muted text-decoration-none small">取消并返回</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var type = document.getElementById('recordType').value;
+            var locSelect = document.getElementById('id_location_type');
+            var costContainer = document.getElementById('cost-container');
+            var costInput = document.getElementById('id_cost');
+
+            function updateVisibility() {
+                var show = true;
+
+                // 规则：充电 或 尿素 -> 隐藏金额
+                if (type === 'charge' || type === 'urea') { 
+                    show = false; 
+                }
+                // 规则：加油 + 现场 -> 隐藏金额
+                else if (type === 'fuel' && locSelect && locSelect.value === 'site') { 
+                    show = false; 
+                }
+
+                if (show) {
+                    costContainer.style.display = 'block';
+                } else {
+                    costContainer.style.display = 'none';
+                    if(costInput) costInput.value = 0; 
+                }
+            }
+
+            // 初始化
+            updateVisibility();
+
+            // 监听
+            if (locSelect) {
+                locSelect.addEventListener('change', updateVisibility);
+            }
+        });
+    </script>
+</body>
+</html>
